@@ -1,5 +1,7 @@
 # discord-task-bot
 
+![CI](https://github.com/philaconvalley/discord-task-bot/actions/workflows/ci.yml/badge.svg)
+
 Discord bot for PhilaCon Valley task assignments, due-date reminders, and
 Scheduled Event creation. See the design spec and implementation plan in the
 `philaConValley` working folder under `docs/superpowers/specs/` and
@@ -18,14 +20,21 @@ Scheduled Event creation. See the design spec and implementation plan in the
 2. Under **Bot**, create a bot user and copy the token into `DISCORD_TOKEN`.
 3. Copy the **Application ID** (General Information tab) into
    `DISCORD_CLIENT_ID`.
-4. Under **OAuth2 → URL Generator**, check the `bot` and
+4. Under **Bot**, scroll to **Authorization Flow** and turn **Requires OAuth2
+   Code Grant** OFF. It's on by default for new applications and silently
+   breaks the invite link below (see Troubleshooting).
+5. Under **OAuth2 → URL Generator**, check the `bot` and
    `applications.commands` scopes, then under bot permissions check
    `View Channels`, `Send Messages`, and `Manage Events`. Open the generated
    URL and invite the bot to the PhilaCon Valley server.
-5. Enable Developer Mode in Discord (Settings → Advanced), right-click the
+6. Enable Developer Mode in Discord (Settings → Advanced), right-click the
    server icon → Copy Server ID → `GUILD_ID`. Right-click the `#tasks`
    channel → Copy Channel ID → `TASKS_CHANNEL_ID`.
-6. Register slash commands: `npm run deploy-commands`. Re-run this any time
+7. If `#tasks` is a private channel, open its channel settings → Permissions
+   → Add members or roles → add the bot, with View Channel and Send Messages
+   allowed. Slash-command replies work in a private channel without this,
+   but the reminder cron's direct channel posts do not (see Troubleshooting).
+8. Register slash commands: `npm run deploy-commands`. Re-run this any time
    command definitions change.
 
 ## Deploying to Railway
@@ -40,3 +49,47 @@ Scheduled Event creation. See the design spec and implementation plan in the
    (Nixpacks detects the `build` script).
 6. Run `npm run deploy-commands` once (locally, with the same `.env` values
    as production) to register the slash commands to the guild.
+
+`main` is connected to this Railway service — every push to `main` (i.e.
+every merged PR) auto-deploys. There's no manual `railway up` step in normal
+operation.
+
+## Testing & CI
+
+- `npm test` runs the Vitest suite locally.
+- Every push and pull request against `main` runs `npm ci`, `npm run build`
+  (TypeScript check), and `npm test` via GitHub Actions
+  (`.github/workflows/ci.yml`). `main` is branch-protected to require this
+  check before merging — work in a branch and open a PR rather than pushing
+  directly to `main`.
+
+## Troubleshooting / Gotchas
+
+Real issues hit setting this up the first time, kept here so they don't
+have to be rediscovered:
+
+**Discord invite link fails with "Integration requires code grant."**
+New Discord applications default to **Requires OAuth2 Code Grant** = on,
+under the **Bot** page's **Authorization Flow** section. This blocks the
+plain `bot` + `applications.commands` invite link the OAuth2 URL Generator
+produces. Turn it off, save, and regenerate the invite link.
+
+**Reminders never post, but slash commands work fine in the same channel**
+If `#tasks` (or whatever `TASKS_CHANNEL_ID` points to) is a private channel,
+a slash-command reply can still render there because it rides on the
+interaction itself — but the reminder cron's `channel.send()` is a direct
+channel post, which needs the bot to actually have channel access. Add the
+bot to that channel's permissions (View Channel + Send Messages). The
+failure surfaces as `DiscordAPIError[50001]: Missing Access` in the logs.
+
+**Railway build fails on `better-sqlite3` with a Python/node-gyp error**
+`better-sqlite3` ships prebuilt binaries for common Node versions; if
+Railway's Nixpacks builder auto-selects a very new Node version with no
+matching prebuild, npm falls back to compiling from source via node-gyp,
+which needs Python — not present in the build image, so it fails with
+`Could not find any Python installation to use`. This is why
+`package.json`'s `engines.node` is pinned to an exact `"20.x"` rather than
+an open range like `">=20"` — an open range lets Nixpacks pick the newest
+available Node instead of a version with a working prebuild. Don't loosen
+this pin without confirming the target Node version has a `better-sqlite3`
+prebuild for it.
