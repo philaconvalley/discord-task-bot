@@ -1,4 +1,5 @@
 import type { Database } from 'better-sqlite3';
+import { addDays } from '../lib/date';
 
 export interface Task {
   id: number;
@@ -96,12 +97,6 @@ export function deleteTask(db: Database, id: number): boolean {
 export function markReminded(db: Database, id: number, stage: 'day_before' | 'due_date'): void {
   const column = stage === 'day_before' ? 'reminded_day_before' : 'reminded_due_date';
   db.prepare(`UPDATE tasks SET ${column} = 1 WHERE id = ?`).run(id);
-}
-
-function addDays(isoDate: string, days: number): string {
-  const date = new Date(`${isoDate}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
 }
 
 export function findTasksNeedingReminder(

@@ -2,13 +2,10 @@ import cron from 'node-cron';
 import type { Client } from 'discord.js';
 import type { Database } from 'better-sqlite3';
 import { findTasksNeedingReminder, markReminded } from './repositories/taskRepository';
-
-function todayISODate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { today } from './lib/date';
 
 export async function runReminderCheck(client: Client, db: Database, channelId: string): Promise<void> {
-  const dueReminders = findTasksNeedingReminder(db, todayISODate());
+  const dueReminders = findTasksNeedingReminder(db, today());
   if (dueReminders.length === 0) {
     return;
   }
@@ -31,5 +28,5 @@ export function startReminderJob(client: Client, db: Database, channelId: string
     runReminderCheck(client, db, channelId).catch((error) => {
       console.error('Reminder job failed', error);
     });
-  });
+  }, { timezone: 'America/New_York' });
 }
