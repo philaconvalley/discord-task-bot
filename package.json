@@ -2,6 +2,7 @@
   "name": "discord-task-bot",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "engines": {
     "node": "20.x"
   },
