@@ -3,9 +3,66 @@
 ![CI](https://github.com/philaconvalley/discord-task-bot/actions/workflows/ci.yml/badge.svg)
 
 Discord bot for PhilaCon Valley task assignments, due-date reminders, and
-Scheduled Event creation. See the design spec and implementation plan in the
-`philaConValley` working folder under `docs/superpowers/specs/` and
-`docs/superpowers/plans/` for the full design.
+Scheduled Event creation. PhilaCon Valley is a Philadelphia tech community,
+and this bot runs its task coordination in Discord.
+
+## How it works
+
+TypeScript on Node 20, running as one long-lived `discord.js` client.
+`src/index.ts` loads configuration from the environment, opens the SQLite
+database, wires up the slash commands, and starts the reminder cron once the
+client is ready. Command errors are caught in the dispatcher and answered with
+an ephemeral reply rather than taking the process down.
+
+**Commands**
+
+- `/task add | list | done | delete` (`src/commands/task.ts`) — assign a task
+  to a Discord user with a due date, list tasks filtered by assignee or
+  status, mark a task done, or delete it. Due dates are typed in plain
+  language, e.g. `friday` or `july 17`.
+- `/event add` (`src/commands/event.ts`) — create a Discord Scheduled Event
+  from a name, start time, end time, and location, and reply with the event
+  URL. Requires the bot's `Manage Events` permission.
+
+Command definitions are registered to the guild by `npm run deploy-commands`
+(`src/deploy-commands.ts`), separate from running the bot.
+
+**Storage**
+
+Tasks are stored in SQLite through `better-sqlite3`. `src/db.ts` creates the
+`tasks` table on startup, and every read and write goes through
+`src/repositories/taskRepository.ts`, so command handlers and the reminder job
+never issue SQL themselves. That boundary is also what makes the data layer
+testable against an in-memory database.
+
+**Reminders**
+
+`src/reminderJob.ts` schedules a `node-cron` job at 09:00 America/New_York. It
+finds open tasks due today or tomorrow, posts one message per reminder to
+`TASKS_CHANNEL_ID` mentioning the assignee, and then flags the task
+(`reminded_day_before` / `reminded_due_date`) so the same reminder is not sent
+again on a later run.
+
+**Dates**
+
+`src/lib/parseDate.ts` wraps `chrono-node` to turn typed input into a date,
+resolving ambiguous input forward in time. `src/lib/date.ts` holds the
+timezone-aware conversion to `YYYY-MM-DD`. Dates are stored and compared in
+America/New_York, so "due today" means today in Philadelphia no matter which
+timezone the host runs in.
+
+**Configuration**
+
+`src/config.ts` requires `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `GUILD_ID`,
+`TASKS_CHANNEL_ID`, and `DB_PATH`. If any are absent it throws at startup
+naming the missing ones, so a misconfigured deploy fails immediately instead
+of behaving oddly later. See `.env.example`.
+
+**Tests**
+
+Vitest suites in `tests/` cover configuration loading (`config.test.ts`),
+date conversion (`date.test.ts`), due-date parsing (`parseDate.test.ts`), and
+the task repository including the reminder query (`taskRepository.test.ts`).
 
 ## Local development
 
