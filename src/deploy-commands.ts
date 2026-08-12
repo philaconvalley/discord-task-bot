@@ -3,13 +3,14 @@ import dotenv from 'dotenv';
 import { loadConfig } from './config';
 import { data as taskCommand } from './commands/task';
 import { data as eventCommand } from './commands/event';
+import { data as pollCommand } from './commands/poll';
 
 dotenv.config();
 
 async function main() {
   const config = loadConfig();
   const rest = new REST().setToken(config.discordToken);
-  const commands = [taskCommand.toJSON(), eventCommand.toJSON()];
+  const commands = [taskCommand.toJSON(), eventCommand.toJSON(), pollCommand.toJSON()];
 
   await rest.put(Routes.applicationGuildCommands(config.discordClientId, config.guildId), {
     body: commands,
