@@ -5,9 +5,13 @@ import { loadConfig } from './config';
 import { initDb } from './db';
 import * as taskCommand from './commands/task';
 import * as eventCommand from './commands/event';
+import * as pollCommand from './commands/poll';
 import { startReminderJob } from './reminderJob';
 
-dotenv.config();
+// override: true so this repo's .env wins over anything already exported by the
+// shell. A global DISCORD_TOKEN in ~/.zshrc (Perch's) otherwise shadows it
+// silently, and the bot authenticates as the wrong application.
+dotenv.config({ override: true });
 
 const config = loadConfig();
 const db = initDb(config.dbPath);
@@ -25,6 +29,10 @@ commands.set(taskCommand.data.name, {
 commands.set(eventCommand.data.name, {
   data: eventCommand.data,
   execute: (interaction) => eventCommand.execute(interaction),
+});
+commands.set(pollCommand.data.name, {
+  data: pollCommand.data,
+  execute: (interaction) => pollCommand.execute(interaction),
 });
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
