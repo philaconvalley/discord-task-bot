@@ -8,7 +8,10 @@ import * as eventCommand from './commands/event';
 import * as pollCommand from './commands/poll';
 import { startReminderJob } from './reminderJob';
 
-dotenv.config();
+// override: true so this repo's .env wins over anything already exported by the
+// shell. A global DISCORD_TOKEN in ~/.zshrc (Perch's) otherwise shadows it
+// silently, and the bot authenticates as the wrong application.
+dotenv.config({ override: true });
 
 const config = loadConfig();
 const db = initDb(config.dbPath);
