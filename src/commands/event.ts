@@ -5,6 +5,7 @@ import {
   GuildScheduledEventPrivacyLevel,
 } from 'discord.js';
 import { parseDateTime } from '../lib/parseDate';
+import { eventTimeError } from '../lib/eventTimes';
 
 export const data = new SlashCommandBuilder()
   .setName('event')
@@ -53,6 +54,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       content: `I couldn't understand the end time "${endInput}".`,
       ephemeral: true,
     });
+    return;
+  }
+
+  const timeError = eventTimeError(start, end);
+  if (timeError) {
+    await interaction.reply({ content: timeError, ephemeral: true });
     return;
   }
 
