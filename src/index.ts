@@ -1,4 +1,11 @@
-import { Client, GatewayIntentBits, Collection, ChatInputCommandInteraction } from 'discord.js';
+import {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  ChatInputCommandInteraction,
+  MessageFlags,
+  type InteractionReplyOptions,
+} from 'discord.js';
 import type { Database } from 'better-sqlite3';
 import dotenv from 'dotenv';
 import { loadConfig } from './config';
@@ -55,7 +62,10 @@ client.on('interactionCreate', async (interaction) => {
     await command.execute(interaction, db);
   } catch (error) {
     console.error(`Error executing /${interaction.commandName}`, error);
-    const errorReply = { content: 'Something went wrong running that command.', ephemeral: true };
+    const errorReply: InteractionReplyOptions = {
+      content: 'Something went wrong running that command.',
+      flags: MessageFlags.Ephemeral,
+    };
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp(errorReply);
     } else {

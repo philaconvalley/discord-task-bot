@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { buildPoll, MAX_ANSWERS, DEFAULT_DURATION_HOURS, MAX_DURATION_HOURS } from '../lib/poll';
 
 const ANSWER_OPTION_NAMES = Array.from({ length: MAX_ANSWERS }, (_, index) => `option${index + 1}`);
@@ -44,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   });
 
   if (!result.ok) {
-    await interaction.reply({ content: result.error, ephemeral: true });
+    await interaction.reply({ content: result.error, flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -54,7 +54,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     console.error('Failed to post poll', error);
     await interaction.reply({
       content: 'Something went wrong posting that poll. Check the bot can send messages here.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

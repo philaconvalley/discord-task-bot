@@ -3,6 +3,7 @@ import {
   ChatInputCommandInteraction,
   GuildScheduledEventEntityType,
   GuildScheduledEventPrivacyLevel,
+  MessageFlags,
 } from 'discord.js';
 import { parseDateTime } from '../lib/parseDate';
 
@@ -42,7 +43,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   if (!start) {
     await interaction.reply({
       content: `I couldn't understand the start time "${startInput}".`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -51,13 +52,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   if (!end) {
     await interaction.reply({
       content: `I couldn't understand the end time "${endInput}".`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
 
   if (!interaction.guild) {
-    await interaction.reply({ content: 'This command only works in a server.', ephemeral: true });
+    await interaction.reply({ content: 'This command only works in a server.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -77,7 +78,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     console.error('Failed to create scheduled event', error);
     await interaction.reply({
       content: 'Something went wrong creating that event. Check the bot has the "Manage Events" permission.',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }
