@@ -2,6 +2,7 @@ import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import type { Database } from 'better-sqlite3';
 import { parseDueDate } from '../lib/parseDate';
 import { createTask, listTasks, getTaskById, markTaskDone, deleteTask } from '../repositories/taskRepository';
+import { formatTaskList } from '../lib/taskList';
 
 export const data = new SlashCommandBuilder()
   .setName('task')
@@ -102,11 +103,7 @@ async function handleList(interaction: ChatInputCommandInteraction, db: Database
     return;
   }
 
-  const lines = tasks.map(
-    (task) => `#${task.id} [${task.status}] "${task.description}" — <@${task.assigneeId}>, due ${task.dueDate}`
-  );
-
-  await interaction.reply({ content: lines.join('\n'), ephemeral: true });
+  await interaction.reply({ content: formatTaskList(tasks), ephemeral: true });
 }
 
 async function handleDone(interaction: ChatInputCommandInteraction, db: Database): Promise<void> {
