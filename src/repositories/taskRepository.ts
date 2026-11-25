@@ -83,10 +83,12 @@ export function listTasks(
   return rows.map(rowToTask);
 }
 
-export function markTaskDone(db: Database, id: number): Task | undefined {
+export function markTaskDone(db: Database, id: number): boolean {
   const completedAt = new Date().toISOString();
-  db.prepare(`UPDATE tasks SET status = 'done', completed_at = ? WHERE id = ?`).run(completedAt, id);
-  return getTaskById(db, id);
+  const result = db
+    .prepare(`UPDATE tasks SET status = 'done', completed_at = ? WHERE id = ? AND status = 'open'`)
+    .run(completedAt, id);
+  return result.changes > 0;
 }
 
 export function deleteTask(db: Database, id: number): boolean {

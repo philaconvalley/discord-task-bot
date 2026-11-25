@@ -118,7 +118,11 @@ async function handleDone(interaction: ChatInputCommandInteraction, db: Database
     return;
   }
 
-  markTaskDone(db, id);
+  if (!markTaskDone(db, id)) {
+    await interaction.reply({ content: `Task #${id} is already done.`, ephemeral: true });
+    return;
+  }
+
   await interaction.reply(`✅ Task #${id} "${existing.description}" marked done.`);
 }
 

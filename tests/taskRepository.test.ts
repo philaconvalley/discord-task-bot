@@ -45,10 +45,22 @@ describe('taskRepository', () => {
 
   it('marks a task done and sets completedAt', () => {
     const task = createTask(db, { description: 'A', assigneeId: 'user-1', dueDate: '2026-07-17', createdBy: 'user-2' });
-    const done = markTaskDone(db, task.id);
+    expect(markTaskDone(db, task.id)).toBe(true);
 
+    const done = getTaskById(db, task.id);
     expect(done?.status).toBe('done');
     expect(done?.completedAt).not.toBeNull();
+  });
+
+  it('keeps the original completedAt when a task is marked done twice', () => {
+    const task = createTask(db, { description: 'A', assigneeId: 'user-1', dueDate: '2026-07-17', createdBy: 'user-2' });
+
+    expect(markTaskDone(db, task.id)).toBe(true);
+    const first = getTaskById(db, task.id);
+    expect(first?.completedAt).not.toBeNull();
+
+    expect(markTaskDone(db, task.id)).toBe(false);
+    expect(getTaskById(db, task.id)?.completedAt).toBe(first?.completedAt);
   });
 
   it('deletes a task', () => {
