@@ -71,7 +71,7 @@ async function handleAdd(interaction: ChatInputCommandInteraction, db: Database)
   if (!dueDate) {
     await interaction.reply({
       content: `I couldn't understand the due date "${dueInput}". Try something like "friday" or "july 17".`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -98,7 +98,7 @@ async function handleList(interaction: ChatInputCommandInteraction, db: Database
   });
 
   if (tasks.length === 0) {
-    await interaction.reply({ content: 'No tasks found.', ephemeral: true });
+    await interaction.reply({ content: 'No tasks found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -106,7 +106,7 @@ async function handleList(interaction: ChatInputCommandInteraction, db: Database
     (task) => `#${task.id} [${task.status}] "${task.description}" — <@${task.assigneeId}>, due ${task.dueDate}`
   );
 
-  await interaction.reply({ content: lines.join('\n'), ephemeral: true });
+  await interaction.reply({ content: lines.join('\n'), flags: MessageFlags.Ephemeral });
 }
 
 async function handleDone(interaction: ChatInputCommandInteraction, db: Database): Promise<void> {
@@ -114,7 +114,7 @@ async function handleDone(interaction: ChatInputCommandInteraction, db: Database
   const existing = getTaskById(db, id);
 
   if (!existing) {
-    await interaction.reply({ content: `Task #${id} not found.`, ephemeral: true });
+    await interaction.reply({ content: `Task #${id} not found.`, flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -135,7 +135,7 @@ async function handleDelete(interaction: ChatInputCommandInteraction, db: Databa
   const deleted = deleteTask(db, id);
 
   if (!deleted) {
-    await interaction.reply({ content: `Task #${id} not found.`, ephemeral: true });
+    await interaction.reply({ content: `Task #${id} not found.`, flags: MessageFlags.Ephemeral });
     return;
   }
 
